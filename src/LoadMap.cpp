@@ -47,6 +47,10 @@
 #include <err.h> // for qerrstr()
 #include <prodir.h> // just for MAXPATH
 
+#if IDA_SDK_VERSION >= 800 && defined(HAS_IDA_QT_DEV_LIB)
+// Hex-rays modified Qt is not a part of IDA SDK, needs to be dowloaded separately
+#include <QGuiApplication>
+#endif
 
 typedef struct _tagPLUGIN_OPTIONS {
     int bNameApply;    //< true - apply to name, false - apply to comment
@@ -221,9 +225,14 @@ bool idaapi run(size_t)
     static char mapFileName[_MAX_PATH] = { 0 };
 
     { // If user press shift key, show options dialog
-#if IDA_SDK_VERSION >= 800
+#if 0
+        // IDA API method - does not work in IDA 8/9, so disabling
         input_event_t input_event;
         if (get_user_input_event(&input_event) && (input_event.modifiers & VES_SHIFT))
+#elif IDA_SDK_VERSION >= 800 && defined(HAS_IDA_QT_DEV_LIB)
+        // Qt method - requires a special version of Qt which was used for building IDA
+        Qt::KeyboardModifiers key = QApplication::queryKeyboardModifiers();
+        if (key == Qt::ShiftModifier)
 #else
         // Windows-only method
         if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
